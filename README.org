@@ -10,8 +10,27 @@ Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tr
 :TOC:      :include all :force (depth) :ignore (this) :local (depth)
 :END:
 :CONTENTS:
-- [[#alias-scripts][Alias Scripts]]
+- [[#tips--tricks][Tips & Tricks]]
+  - [[#general][General]]
+    - [[#reuse-arguments-][Reuse arguments (!$)]]
+    - [[#last-exit-code-][Last Exit Code ($?)]]
+    - [[#-curly-brace-expansion-][{ Curly Brace Expansion }]]
+    - [[#ez-backup-with-cp][EZ backup with cp]]
+    - [[#repeat-command][Repeat command]]
+  - [[#streams][Streams]]
+    - [[#stderr][stderr]]
+  - [[#sorting-information][Sorting information]]
+    - [[#list-all-users][List all users]]
+    - [[#list-file-sizes-in-directory][List file sizes in directory]]
+  - [[#networking][Networking]]
+    - [[#check-if-remote-port-is-open][Check if remote port is open]]
+    - [[#check-isp-ip][Check ISP IP]]
+  - [[#substrings][Substrings]]
+  - [[#misc][Misc]]
+- [[#scripts][Scripts]]
+  - [[#debugging][Debugging]]
   - [[#ls--la-with-numerical-file-permissionsmode][ls -la with numerical file permissions/mode]]
+- [[#reference][Reference]]
 :END:
   
 * Tips & Tricks

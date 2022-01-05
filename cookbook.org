@@ -1,0 +1,143 @@
+:PROPERTIES:
+:TOC:      :include all :force (depth) :ignore (this) :local (depth)
+:END:
+#+TITLE: SysAdmin Cookbook
+
+Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tricks of the trade that I've found useful in navigating the unix-sphere. If you are an Emacs user you are able to ~org-babel-tangle~ this file. It will create a folder called =~/scripts=.
+
+* Table of Content
+:PROPERTIES:
+:TOC:      :include all :force (depth) :ignore (this) :local (depth)
+:END:
+:CONTENTS:
+- [[#alias-scripts][Alias Scripts]]
+  - [[#ls--la-with-numerical-file-permissionsmode][ls -la with numerical file permissions/mode]]
+:END:
+  
+* Tips & Tricks
+** General
+*** Reuse arguments (!$)
+#+begin_src shell
+$ ls /tmp
+file1.txt file2.txt file3.txt
+$ cd !$
+/tmp
+#+end_src
+*** Last Exit Code ($?)
+#+begin_src shell
+$ ls /tmp
+file1.txt
+$ echo $?
+0
+#+end_src
+*** { Curly Brace Expansion }
+{ curly brace expansion } can be useful when you run a series of similar commands that differ. Acts as a mini =for= loop.
+  #+begin_src shell
+  $ touch file-{1,2,3}.md
+  $ ls
+  # Creates file-1.md file-2.md file-3.md
+  #+end_src
+*** EZ backup with cp
+#+begin_src shell
+$ cp file.txt{,.bak}
+$ ls -l
+file.txt
+file.txt.bak
+#+end_src
+*** Repeat command
+Execute a command every two seconds and monitor output.
+#+begin_src shell
+watch -n2 echo hello
+#+end_src
+
+** Streams
+Because for some reason I forget them all the time
+*** stderr
+#+begin_src shell
+$ >&2 echo hello
+hello
+#+end_src
+
+** Sorting information 
+*** List all users
+#+begin_src shell
+$ cut -d: -f1 /etc/passwd
+#+end_src
+
+*** List file sizes in directory
+#+begin_src shell
+$ du -sh * | sort -h
+#+end_src
+
+** Networking
+*** Check if remote port is open
+#+begin_src shell
+$ telnet 1.2.3.4 80
+#+end_src
+
+*** Check ISP IP
+#+begin_src shell
+$ curl ifconfig.co
+#+end_src
+
+** Substrings
+Hash =#= will find the first occurence from the start, and modulo =%= will grab the first occurence from the end. =*= for mc-globbin'. If you're feeling greedy, =##= and =%%=. 
+#+begin_src shell
+$ var="death metal"
+
+$ echo ${var#* } # Get second word
+metal
+$ echo ${var#*d} # Cuts specified substring 
+eath metal
+$ echo ${var##*t} # Cuts everything up until the matched char
+al
+
+$ echo ${var% *} # Get first word
+death
+$ echo ${var%a*} # Cuts specified substring starting from end
+death met
+$ echo ${var%%a*} # Cuts after occurence
+de
+#+end_src
+
+** Misc
+- =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
+     
+* Scripts
+Smaller functions are in =zsh_functions=, but it's impractical to put larger scripts there so they live in =~/scripts= instead so I can call them with aliases. 
+
+** Debugging
+#+begin_src shell
+/usr/bin/env bash
+set -xv
+#+end_src
+
+** ls -la with numerical file permissions/mode
+Warning: AWK BLACK MAGIC AHEAD
+
+I dislike calculating rwx with =ls -la=. I'm not sure why this isn't native to ls, but this function will show the permissions bits next to rwx permissions (i.e. 0644)
+#+begin_src shell :tangle ~/scripts/ls-with-file-mode-bits.sh :mkdirp yes
+ls -l | awk '{
+    k = 0
+    s = 0
+    for( i = 0; i <= 8; i++ )
+    {
+        k += ( ( substr( $1, i+2, 1 ) ~ /[rwxst]/ ) * 2 ^( 8 - i ) )
+    }
+    j = 4 
+    for( i = 4; i <= 10; i += 3 )
+    {
+        s += ( ( substr( $1, i, 1 ) ~ /[stST]/ ) * j )
+        j/=2
+    }
+    if ( k )
+    {
+        printf( "%0o%0o ", s, k )
+    }
+    print
+}'
+#+end_src
+
+* Reference
+- [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]
+- [[https://github.com/dylanaraps/pure-sh-bible][Pure POSIX shell Bible]]

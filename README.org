@@ -3,7 +3,7 @@
 :END:
 #+TITLE: SysAdmin Cookbook
 
-Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tricks of the trade that I've found useful in navigating the unix-sphere. If you are an Emacs user you are able to ~org-babel-tangle~ this file. It will create a folder called =~/scripts=.
+Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tricks of the trade that I've found useful in navigating the unix-sphere.
 
 * Table of Content
 :PROPERTIES:

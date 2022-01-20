@@ -33,7 +33,7 @@ Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tr
 - [[#reference][Reference]]
 :END:
   
-* Tips & Tricks
+* CLI/Shell
 ** General
 *** Reuse arguments (!$)
 #+begin_src shell
@@ -78,35 +78,24 @@ hello
 #+end_src
 
 ** Sorting information 
-*** List all users
+*** cut - List all users
 #+begin_src shell
 $ cut -d: -f1 /etc/passwd
 #+end_src
 
-*** List file sizes in directory
+*** du - List file sizes in directory
 #+begin_src shell
 $ du -sh * | sort -h
 #+end_src
 
-** Networking
-*** Check if remote port is open
-#+begin_src shell
-$ telnet 1.2.3.4 80
-#+end_src
-
-*** Check ISP IP
-#+begin_src shell
-$ curl ifconfig.co
-#+end_src
-
 ** Substrings
-Hash =#= will find the first occurence from the start, and modulo =%= will grab the first occurence from the end. =*= for mc-globbin'. If you're feeling greedy, =##= and =%%=. 
+Hash =#= will find the first occurence from the start, and modulo =%= will grab the first occurence from the end. =*= for mc-globbin'. If you're feeling greedy, =##= and =%%=.
 #+begin_src shell
 $ var="death metal"
 
 $ echo ${var#* } # Get second word
 metal
-$ echo ${var#*d} # Cuts specified substring 
+$ echo ${var#*d} # Cuts specified substring
 eath metal
 $ echo ${var##*t} # Cuts everything up until the matched char
 al
@@ -121,7 +110,29 @@ de
 
 ** Misc
 - =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
-     
+
+* Permissions
+** Umask
+Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).
+
+Example
+    - 027 = (7 - 0 = 7 User), (7 - 2 = 5 Group), (7 - 7 = 0 Other) = 750
+    - System wide setting: ~UMASK~ in =/etc/login.defs=
+    - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
+
+
+
+* Networking
+*** Check if remote port is open
+#+begin_src shell
+$ telnet 1.2.3.4 80
+#+end_src
+
+*** Check ISP IP
+#+begin_src shell
+$ curl ifconfig.co
+#+end_src
+
 * Scripts
 Smaller functions are in =zsh_functions=, but it's impractical to put larger scripts there so they live in =~/scripts= instead so I can call them with aliases. 
 

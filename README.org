@@ -120,8 +120,6 @@ Example
     - System wide setting: ~UMASK~ in =/etc/login.defs=
     - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
 
-
-
 * Networking
 *** Check if remote port is open
 #+begin_src shell
@@ -132,7 +130,246 @@ $ telnet 1.2.3.4 80
 #+begin_src shell
 $ curl ifconfig.co
 #+end_src
+*** Bonding Methods
+Name            Description
+balance-rr (0)  transmit packets in sequential order from the first available slave through the last (provides load-balancing and fault tolerance)
+active-backup  only one NIC slave in the bond is active, and fallsback to the second slave if the first one fails (provides fault-tolerance)
+balance-xor  transmit packet based on a hash of the packets source and destination (provides load-balancing and fault tolerance)
+broadcast  transmit network packets on all slave network interfaces (provides fault tolerance)
+802.3ad, LACP  aggregation groups that share the same speed and duplex settings. (provides fault tolerance and load-balancing)
 
+* journalctl
+=sudo journalctl -u apache2.service --since today --no-pager=: only show today logging output
+* systemd
+** Useful commands
+=systemctl list-unit-files | grep enabled=: show enabled units
+=systemctl --type=service=: show only service units
+=systemctl list-units --type=service --all=: Shows all active & inactive service units
+=systemctl --failed --type=service=: Shows failed services
+=systemctl status -l httpd.service=: Shows detailed status information
+
+** Run level management
+=systemctl isolate=: change runlevel
+=systemctl get-default=: see default runlevel
++--------------------+--------------------+
+|Run Level           |Target              |
++--------------------+--------------------+
+|0                   |poweroff.target     |
++--------------------+--------------------+
+|1                   |rescue.target       |
++--------------------+--------------------+
+|3                   |multi-user.target   |
++--------------------+--------------------+
+|5                   |graphical.target    |
++--------------------+--------------------+
+|6                   |reboot.target       |
++--------------------+--------------------+
+|emergency           |emergency.target    |
++--------------------+--------------------+
+** Unit File Reference
+*** Service Unit Files
+#+begin_src shell
+[Unit]
+# Describes the unit and dependencies.
+Description=Vsftpd ftp daemon
+After=network.target
+Before=graphical.target
+
+# Describes how to start and stop the service, and request status.
+[Service]
+Type=forking|oneshot
+ExecStart=/usr/sbin/vsftpd /etc/vsftpd/vstpd.conf
+
+# Describes which target this unit needs to be started in.
+[Install]
+WantedBy=multi-user.target
+#+end_src
+*** Mount Unit Files
+#+begin_src shell
+[Unit]
+# Describes the unit and dependencies.
+Description=Temporary Dir (/tmp/stuff)
+Documentation=man:somemanpage
+ConditionPathIsSymbolicLink=!/tmp/stuff
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=swap.target
+
+# Describes mount properties
+What=tmpfs
+Where=/tmp/stuff
+Type=tmpfs
+Options=mode=1777,strictatime,nosuid,nodev
+
+#+end_src
+*** Socket Unit File
+#+begin_src shell
+[Unit]
+Description=Cockpit Web Service Socket
+Documentation=man:cockpit-ws(8)
+Wants=cockpit-motd.service
+
+[Socket]
+# Defines tcp port that systemd should be listening to
+ListenStream=9090
+# For UDP
+ListenDatagram=9090
+ExecStartPost=-/usr/share/cockpit/motd/update-motd '' localhost
+ExecStartPost=-/bin/ln -snf active.motd /run/cockpit/motd
+ExecStopPost=-/bin/ln -snf /usr/share/cockpit/motd/inactive.motd /run/cockpit/motd
+
+[Install]
+WantedBy=sockets.target
+#+end_src
+
+** Systemd Status
++----------------------------------------+----------------------------------------+
+|Status                                  |Description                             |
++----------------------------------------+----------------------------------------+
+|Loaded                                  |Unit file has been processed and unit is|
+|                                        |active                                  |
++----------------------------------------+----------------------------------------+
+|Active(running)                         |Running with one or more active         |
+|                                        |processes                               |
++----------------------------------------+----------------------------------------+
+|Active(exited)                          |Successfully completed a one-time run   |
++----------------------------------------+----------------------------------------+
+|Active(waiting)                         |Running and waiting for an event        |
++----------------------------------------+----------------------------------------+
+|Inactive(dead)                          |Not running                             |
++----------------------------------------+----------------------------------------+
+|Enabled                                 |Started at boot-time                    |
++----------------------------------------+----------------------------------------+
+|Disabled                                |Not started at boot-time                |
++----------------------------------------+----------------------------------------+
+|Static                                  |Cannot be enabled but may be started by |
+|                                        |another unit automatically              |
++----------------------------------------+----------------------------------------+
+* cron/at
+- cron
++------------+----------+
+|Fields      |          |
++------------+----------+
+|minute      |0-59      |
++------------+----------+
+|hour        |0-23      |
++------------+----------+
+|day-of-month|1-31      |
++------------+----------+
+|month       |1-12      |
++------------+----------+
+|day-of-week |0-7       |
++------------+----------+
+
+- atd
+  Make sure atd.service is enabled and running
+  =atq=: check jobs
+  Examples: =at noon=, =at 14:00=
+* apache/httpd
+** Troubleshooting
+=systemctl status apache2.service -l --no-pager=: ~-l~ makes sure nothing is truncated
+=apachectl configtest=: test the /etc/apache2/apache2.conf configuration
+
+* nginx
+=nginx -t=: test nginx configuration
+~/logs/error.log~ & ~/logs/access.log~: important log files
+
+** Security Reference
+~server_tokens off~: will disable the nginx/nginx version number on error pages
+~add_header X-Frame-Options "SAMEORIGIN";~: indicates if a browser should be allowed to render a page in a <frame> or an <iframe>. Always set this.
+~add_header Strict-Transport-Security "max-age=3156000; includeSubdomains; preload";~: used by websites to declare they should only be accessed via HTTPS. The browser must refuse all HTTP connections and prevent users from accepting insecure SSL certs. (NOTE: the browser caches the STS header for the max-age time, so if you mess up your certs while HSTS you're screwed until you flush the site-data in your browser. This is important because if a user isn't technical they will lose access to your site until they clear their own browser which may never happen within the max-age alloted time). ([[https://www.acunetix.com/blog/articles/what-is-hsts-why-use-it/][Reference]])
+~add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;~: Protects the server against certain types of attack including XSS (Cross Site Scripting attacks).
+
+We can limit HTTP methods in the ~location~ directive.
+#+begin_src shell
+location / {
+    limit_except GET HEAD POST { deny all; }
+}
+#+end_src
+
+** Load Balancer Reference
++------------------------------+------------------------------+
+|LB Method                     |Description                   |
++------------------------------+------------------------------+
+|round-robin                   |requests are proxied to host  |
+|                              |in order they are received    |
++------------------------------+------------------------------+
+|least-connected               |requests are proxied to host  |
+|                              |with least connections        |
++------------------------------+------------------------------+
+
+***
+#+begin_src shell
+http {
+    upstream myapp1 {
+        server srv1.example.com;
+        server srv2.example.com;
+        server srv3.example.com;
+    }
+
+    server {
+        listen 80;
+
+        location / {
+            proxy_pass http://myapp1;
+        }
+    }
+}
+#+end_src
+** Reverse Proxy Reference
+#+begin_src shell
+server {
+    listen                  443 ssl http2;
+    listen                  [::]:443 ssl http2;
+    # If you want www, just prepend it i.e. www.server.example.sh, add to HTTP redirect
+    # if applicable.
+    server_name             jellyfin.tr909.sh;
+
+    # SSL
+    ssl_certificate         /etc/letsencrypt/live/server.example.sh/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/server.example.sh/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/server.example.sh/chain.pem;
+
+    # You can include relevant configuration files
+    include                 extra/security.conf;
+
+    # reverse proxy
+    location  {
+        # The internal DNS/IP:Port/localhost
+        proxy_pass http://uqbar.nullvoid.rip:8096;
+    }
+
+}
+
+# subdomains redirect
+# omit this if applicable
+server {
+    listen                  443 ssl http2;
+    listen                  [::]:443 ssl http2;
+    # * will redirect all subdomains i.e. music.server.example.sh;
+    server_name             *.jellyfin.example.sh;
+
+    # SSL
+    ssl_certificate         /etc/letsencrypt/live/jellyfin.tr909.sh/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/jellyfin.tr909.sh/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/jellyfin.tr909.sh/chain.pem;
+    return                  301 https://jellyfin.tr909.sh$request_uri;
+}
+
+# HTTP redirect
+# Will force HTTPS
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name .jellyfin.tr909.sh;
+    include     nginxconfig.io/letsencrypt.conf;
+
+    location / {
+        return 301 https://jellyfin.tr909.sh$request_uri;
+    }
+}
+#+end_src
 * Scripts
 Smaller functions are in =zsh_functions=, but it's impractical to put larger scripts there so they live in =~/scripts= instead so I can call them with aliases. 
 
@@ -167,6 +404,7 @@ ls -l | awk '{
     print
 }'
 #+end_src
+* *rc Snippets
 
 * Reference
 - [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]

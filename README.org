@@ -3,7 +3,7 @@
 :END:
 #+TITLE: SysAdmin Cookbook
 
-Here is a collection of neat aliases, scripts, zsh/bash/shell-isms, tips, and tricks of the trade that I've found useful in navigating the unix-sphere.
+Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of the trade that I've found useful in navigating the unix-sphere over the years.
 
 * Table of Content
 :PROPERTIES:
@@ -137,6 +137,36 @@ active-backup  only one NIC slave in the bond is active, and fallsback to the se
 balance-xor  transmit packet based on a hash of the packets source and destination (provides load-balancing and fault tolerance)
 broadcast  transmit network packets on all slave network interfaces (provides fault tolerance)
 802.3ad, LACP  aggregation groups that share the same speed and duplex settings. (provides fault tolerance and load-balancing)
+
+* SQL
+** Installation
+Depending on the system, after installing mariadb/mysql you may need to initialize and start with ~--datadir~ and ~--basedir~:
+=mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql=
+
+If you use a non-default location, you can either find it or set it in the [mysqld] section of ~/etc/my.cnf.d/server.cnf~.
+
+Then start with systemd
+** Files
+~/var/lib/mysql~ needs to have the execute bit set (=chmod u=rwx,g=rwx=), and =mysql:mysql= needs to own the directory.
+** Logs
+- ~/var/log/mysql~
+  If the log isn't here, check the option file (example.cnf). You can grep these variables with:
+  =mysqld --help --verbose | grep 'log-error' | tail -1=
+
+- Check option file parameters with:
+  =mysqld --print-defaults=
+
+- systemd journal
+  =sudo journalctl -u mariadb.service --no-pager=
+** General
+- =mysql -u root -p=: log in (the password will be blank upon first initil login)
+
+** Create User
+#+begin_src sql
+CREATE USER 'user'@'localost' IDENTIFIED BY 'some_password';
+GRANT ALL PRIVILEGES ON mydb.* TO 'user'@'localhost';
+FLUSH PRIVILEGES;
+#+end_src
 
 * journalctl
 =sudo journalctl -u apache2.service --since today --no-pager=: only show today logging output
@@ -276,7 +306,7 @@ WantedBy=sockets.target
 ~/logs/error.log~ & ~/logs/access.log~: important log files
 
 ** Security Reference
-~server_tokens off~: will disable the nginx/nginx version number on error pages
+~server_tokens off~: will disable the nginx + version number on error pages.
 ~add_header X-Frame-Options "SAMEORIGIN";~: indicates if a browser should be allowed to render a page in a <frame> or an <iframe>. Always set this.
 ~add_header Strict-Transport-Security "max-age=3156000; includeSubdomains; preload";~: used by websites to declare they should only be accessed via HTTPS. The browser must refuse all HTTP connections and prevent users from accepting insecure SSL certs. (NOTE: the browser caches the STS header for the max-age time, so if you mess up your certs while HSTS you're screwed until you flush the site-data in your browser. This is important because if a user isn't technical they will lose access to your site until they clear their own browser which may never happen within the max-age alloted time). ([[https://www.acunetix.com/blog/articles/what-is-hsts-why-use-it/][Reference]])
 ~add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;~: Protects the server against certain types of attack including XSS (Cross Site Scripting attacks).
@@ -299,7 +329,6 @@ location / {
 |                              |with least connections        |
 +------------------------------+------------------------------+
 
-***
 #+begin_src shell
 http {
     upstream myapp1 {
@@ -319,12 +348,15 @@ http {
 #+end_src
 ** Reverse Proxy Reference
 #+begin_src shell
-server {
+server {                    # Make nginx listen on all ipv4 addys on port 443 (0.0.0.0:443)
+                            # ssl specifies that all connections accepted should work in SSL mode
+                            # http2 configures port to accept http/2 connections (not exlusively)
     listen                  443 ssl http2;
+                            # Make nginx listen on all ipv6 addys on port 443 (dangol'ipv6:443)
     listen                  [::]:443 ssl http2;
     # If you want www, just prepend it i.e. www.server.example.sh, add to HTTP redirect
     # if applicable.
-    server_name             jellyfin.tr909.sh;
+    server_name             servername.example.sh;
 
     # SSL
     ssl_certificate         /etc/letsencrypt/live/server.example.sh/fullchain.pem;
@@ -336,8 +368,8 @@ server {
 
     # reverse proxy
     location  {
-        # The internal DNS/IP:Port/localhost
-        proxy_pass http://uqbar.nullvoid.rip:8096;
+        # The internal DNS | IP:Port | localhost:port | container_name:port (if applicable)
+        proxy_pass http://internal-server-name.nullvoid.rip:6660;
     }
 
 }
@@ -348,13 +380,14 @@ server {
     listen                  443 ssl http2;
     listen                  [::]:443 ssl http2;
     # * will redirect all subdomains i.e. music.server.example.sh;
-    server_name             *.jellyfin.example.sh;
+    server_name             *.servername.example.sh;
 
-    # SSL
+    # SSL/Paths to letsencrypt keys
     ssl_certificate         /etc/letsencrypt/live/jellyfin.tr909.sh/fullchain.pem;
     ssl_certificate_key     /etc/letsencrypt/live/jellyfin.tr909.sh/privkey.pem;
     ssl_trusted_certificate /etc/letsencrypt/live/jellyfin.tr909.sh/chain.pem;
-    return                  301 https://jellyfin.tr909.sh$request_uri;
+
+    return                  301 https://servername.example.sh$request_uri;
 }
 
 # HTTP redirect
@@ -362,11 +395,10 @@ server {
 server {
     listen      80;
     listen      [::]:80;
-    server_name .jellyfin.tr909.sh;
-    include     nginxconfig.io/letsencrypt.conf;
+    server_name .servername.example.sh;
 
     location / {
-        return 301 https://jellyfin.tr909.sh$request_uri;
+        return 301 https://servername.example.sh$request_uri;
     }
 }
 #+end_src
@@ -404,8 +436,6 @@ ls -l | awk '{
     print
 }'
 #+end_src
-* *rc Snippets
-
 * Reference
 - [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]
 - [[https://github.com/dylanaraps/pure-sh-bible][Pure POSIX shell Bible]]

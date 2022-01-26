@@ -33,37 +33,36 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 - [[#reference][Reference]]
 :END:
   
-* CLI/Shell
-** General
-*** Reuse arguments (!$)
+* Shell Scripting
+** Reuse arguments (!$)
 #+begin_src shell
 $ ls /tmp
 file1.txt file2.txt file3.txt
 $ cd !$
 /tmp
 #+end_src
-*** Last Exit Code ($?)
+** Last Exit Code ($?)
 #+begin_src shell
 $ ls /tmp
 file1.txt
 $ echo $?
 0
 #+end_src
-*** { Curly Brace Expansion }
+** { Curly Brace Expansion }
 { curly brace expansion } can be useful when you run a series of similar commands that differ. Acts as a mini =for= loop.
   #+begin_src shell
   $ touch file-{1,2,3}.md
   $ ls
   # Creates file-1.md file-2.md file-3.md
   #+end_src
-*** EZ backup with cp
+** EZ backup with cp
 #+begin_src shell
 $ cp file.txt{,.bak}
 $ ls -l
 file.txt
 file.txt.bak
 #+end_src
-*** Repeat command
+** Repeat command
 Execute a command every two seconds and monitor output.
 #+begin_src shell
 watch -n2 echo hello
@@ -75,17 +74,6 @@ Because for some reason I forget them all the time
 #+begin_src shell
 $ >&2 echo hello
 hello
-#+end_src
-
-** Sorting information 
-*** cut - List all users
-#+begin_src shell
-$ cut -d: -f1 /etc/passwd
-#+end_src
-
-*** du - List file sizes in directory
-#+begin_src shell
-$ du -sh * | sort -h
 #+end_src
 
 ** Substrings
@@ -108,8 +96,36 @@ $ echo ${var%%a*} # Cuts after occurence
 de
 #+end_src
 
-** Misc
-- =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
+* Utilities
+** cut
+*** cut - List all users
+#+begin_src shell
+$ cut -d: -f1 /etc/passwd
+#+end_src
+** awk
+*** Simple field (column) print
+#+begin_src sh
+# delimiter comes after -F
+awk -F : '{print $5, $3, $8}' /etc/passwd
+#+end_src
+** find
+*** Search for files older than 7 days (and delete them)
+#+begin_src shell
+find /opt/neteng/mtr/reports -mtime +7 -delete
+#+end_src
+** du
+#+begin_src shell
+$ du -sh * | sort -h
+#+end_src
+** sort
+*** Sort unique occurences of a line in a file
+If you need to sort through unique instances of an item in a file, use =sort -u= or pipe (|) =uniq=. The =-c= flag in uniq will put the count of each uniq item next to the value itself. Say, you need to sort and count unique IPs from most occuring to least occuring and returning with 200 codes:
+#+begin_src shell
+$ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
+
+# => 240 192.168.1.2 200
+# => 239 192.168.1.3 200
+#+end_src
 
 * Permissions
 ** Umask
@@ -121,16 +137,15 @@ Example
     - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
 
 * Networking
-*** Check if remote port is open
+** Check if remote port is open
 #+begin_src shell
 $ telnet 1.2.3.4 80
 #+end_src
-
-*** Check ISP IP
+** Check ISP IP
 #+begin_src shell
 $ curl ifconfig.co
 #+end_src
-*** Bonding Methods
+** Bonding Methods
 Name            Description
 balance-rr (0)  transmit packets in sequential order from the first available slave through the last (provides load-balancing and fault tolerance)
 active-backup  only one NIC slave in the bond is active, and fallsback to the second slave if the first one fails (provides fault-tolerance)
@@ -181,21 +196,13 @@ FLUSH PRIVILEGES;
 ** Run level management
 =systemctl isolate=: change runlevel
 =systemctl get-default=: see default runlevel
-+--------------------+--------------------+
-|Run Level           |Target              |
-+--------------------+--------------------+
-|0                   |poweroff.target     |
-+--------------------+--------------------+
-|1                   |rescue.target       |
-+--------------------+--------------------+
-|3                   |multi-user.target   |
-+--------------------+--------------------+
-|5                   |graphical.target    |
-+--------------------+--------------------+
-|6                   |reboot.target       |
-+--------------------+--------------------+
-|emergency           |emergency.target    |
-+--------------------+--------------------+
+| Run Level | Target            |
+|         0 | poweroff.target   |
+|         1 | rescue.target     |
+|         3 | multi-user.target |
+|         5 | graphical.target  |
+|         6 | reboot.target     |
+| emergency | emergency.target  |
 ** Unit File Reference
 *** Service Unit Files
 #+begin_src shell
@@ -254,43 +261,24 @@ WantedBy=sockets.target
 #+end_src
 
 ** Systemd Status
-+----------------------------------------+----------------------------------------+
-|Status                                  |Description                             |
-+----------------------------------------+----------------------------------------+
-|Loaded                                  |Unit file has been processed and unit is|
-|                                        |active                                  |
-+----------------------------------------+----------------------------------------+
-|Active(running)                         |Running with one or more active         |
-|                                        |processes                               |
-+----------------------------------------+----------------------------------------+
-|Active(exited)                          |Successfully completed a one-time run   |
-+----------------------------------------+----------------------------------------+
-|Active(waiting)                         |Running and waiting for an event        |
-+----------------------------------------+----------------------------------------+
-|Inactive(dead)                          |Not running                             |
-+----------------------------------------+----------------------------------------+
-|Enabled                                 |Started at boot-time                    |
-+----------------------------------------+----------------------------------------+
-|Disabled                                |Not started at boot-time                |
-+----------------------------------------+----------------------------------------+
-|Static                                  |Cannot be enabled but may be started by |
-|                                        |another unit automatically              |
-+----------------------------------------+----------------------------------------+
-* cron/at
+| Status          | Description                                                        |
+| Loaded          | Unit file has been processed and unit is active                    |
+| Active(running) | Running with one or more active                                    |
+|                 | processes                                                          |
+| Active(exited)  | Successfully completed a one-time run                              |
+| Active(waiting) | Running and waiting for an event                                   |
+| Inactive(dead)  | Not running                                                        |
+| Enabled         | Started at boot-time                                               |
+| Disabled        | Not started at boot-time                                           |
+| Static          | Cannot be enabled but may be started by another unit automatically |
+* cron/atk
 - cron
-+------------+----------+
 |Fields      |          |
-+------------+----------+
 |minute      |0-59      |
-+------------+----------+
 |hour        |0-23      |
-+------------+----------+
 |day-of-month|1-31      |
-+------------+----------+
 |month       |1-12      |
-+------------+----------+
 |day-of-week |0-7       |
-+------------+----------+
 
 - atd
   Make sure atd.service is enabled and running
@@ -436,6 +424,11 @@ ls -l | awk '{
     print
 }'
 #+end_src
+* Misc
+- =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
 * Reference
 - [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]
 - [[https://github.com/dylanaraps/pure-sh-bible][Pure POSIX shell Bible]]
+
+* Notes
+- TODO: research /proc/process

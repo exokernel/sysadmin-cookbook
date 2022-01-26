@@ -190,10 +190,14 @@ FLUSH PRIVILEGES;
 =sudo journalctl -u apache2.service --since today --no-pager=: only show today logging output
 * systemd
 ** Useful commands
-=systemctl list-unit-files | grep enabled=: show enabled units
-=systemctl --type=service=: show only service units
+=systemctl list-unit-files | grep enabled=: Show enabled units
+
+=systemctl --type=service=: Show only service units
+
 =systemctl list-units --type=service --all=: Shows all active & inactive service units
+
 =systemctl --failed --type=service=: Shows failed services
+
 =systemctl status -l httpd.service=: Shows detailed status information
 
 ** Run level management
@@ -274,8 +278,8 @@ WantedBy=sockets.target
 | Enabled         | Started at boot-time                                               |
 | Disabled        | Not started at boot-time                                           |
 | Static          | Cannot be enabled but may be started by another unit automatically |
-* cron/atk
-- cron
+* cron/atd
+** cron
 |Fields      |          |
 |minute      |0-59      |
 |hour        |0-23      |
@@ -283,23 +287,26 @@ WantedBy=sockets.target
 |month       |1-12      |
 |day-of-week |0-7       |
 
-- atd
+** atd
   Make sure atd.service is enabled and running
   =atq=: check jobs
   Examples: =at noon=, =at 14:00=
 * apache/httpd
 ** Troubleshooting
 =systemctl status apache2.service -l --no-pager=: ~-l~ makes sure nothing is truncated
-=apachectl configtest=: test the /etc/apache2/apache2.conf configuration
 
+=apachectl configtest=: test the /etc/apache2/apache2.conf configuration
 * nginx
 =nginx -t=: test nginx configuration
 ~/logs/error.log~ & ~/logs/access.log~: important log files
 
 ** Security Reference
 ~server_tokens off~: will disable the nginx + version number on error pages.
+
 ~add_header X-Frame-Options "SAMEORIGIN";~: indicates if a browser should be allowed to render a page in a <frame> or an <iframe>. Always set this.
+
 ~add_header Strict-Transport-Security "max-age=3156000; includeSubdomains; preload";~: used by websites to declare they should only be accessed via HTTPS. The browser must refuse all HTTP connections and prevent users from accepting insecure SSL certs. (NOTE: the browser caches the STS header for the max-age time, so if you mess up your certs while HSTS you're screwed until you flush the site-data in your browser. This is important because if a user isn't technical they will lose access to your site until they clear their own browser which may never happen within the max-age alloted time). ([[https://www.acunetix.com/blog/articles/what-is-hsts-why-use-it/][Reference]])
+
 ~add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;~: Protects the server against certain types of attack including XSS (Cross Site Scripting attacks).
 
 We can limit HTTP methods in the ~location~ directive.
@@ -308,17 +315,12 @@ location / {
     limit_except GET HEAD POST { deny all; }
 }
 #+end_src
-
 ** Load Balancer Reference
-+------------------------------+------------------------------+
-|LB Method                     |Description                   |
-+------------------------------+------------------------------+
-|round-robin                   |requests are proxied to host  |
-|                              |in order they are received    |
-+------------------------------+------------------------------+
-|least-connected               |requests are proxied to host  |
-|                              |with least connections        |
-+------------------------------+------------------------------+
+| LB Method       | Description                  |
+| round-robin     | requests are proxied to host |
+|                 | in order they are received   |
+| least-connected | requests are proxied to host |
+|                 | with least connections       |
 
 #+begin_src shell
 http {

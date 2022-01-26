@@ -146,12 +146,15 @@ $ telnet 1.2.3.4 80
 $ curl ifconfig.co
 #+end_src
 ** Bonding Methods
-Name            Description
-balance-rr (0)  transmit packets in sequential order from the first available slave through the last (provides load-balancing and fault tolerance)
-active-backup  only one NIC slave in the bond is active, and fallsback to the second slave if the first one fails (provides fault-tolerance)
-balance-xor  transmit packet based on a hash of the packets source and destination (provides load-balancing and fault tolerance)
-broadcast  transmit network packets on all slave network interfaces (provides fault tolerance)
-802.3ad, LACP  aggregation groups that share the same speed and duplex settings. (provides fault tolerance and load-balancing)
+=balance-rr (0)=: transmit packets in sequential order from the first available slave through the last (provides load-balancing and fault tolerance).
+
+=active-backup=: only one NIC slave in the bond is active, and fallsback to the second slave if the first one fails (provides fault-tolerance).
+
+=balance-xor=: transmit packet based on a hash of the packets source and destination (provides load-balancing and fault tolerance).
+
+=broadcast=: transmit network packets on all slave network interfaces (provides fault tolerance).
+
+=802.3ad, LACP=: aggregation groups that share the same speed and duplex settings. (provides fault tolerance and load-balancing).
 
 * SQL
 ** Installation

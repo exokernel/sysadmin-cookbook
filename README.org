@@ -126,7 +126,28 @@ $ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
 # => 240 192.168.1.2 200
 # => 239 192.168.1.3 200
 #+end_src
+** dmidecode
+=dmidecode= is nifty for finding information about hardware
 
+#+begin_src sh
+# Find SMBIOS data
+$ sudo dmidecode --system
+#+end_src
+
+#+begin_src sh
+# Get chassis info
+$ sudo dmidecode --chassis
+#+end_src
+
+#+begin_src sh
+# This will return a list of potential arguments you can use with
+$ sudo dmidecode -s
+#+end_src
+
+#+begin_src sh
+# To fine tune the search, enter one of the options from the returned list
+$ sudo dmidecode -s bios-vendor
+#+end_src
 * Permissions
 ** Umask
 Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).

@@ -103,10 +103,52 @@ de
 $ cut -d: -f1 /etc/passwd
 #+end_src
 ** awk
+- =-F=: Allows you to specify a field specifier with a delimiting character (such as comma, colon, etc). For example: =awk -F: '{ print $1 }' /etc/passwd=
+- =-f=: Specify awk script file
 *** Simple field (column) print
 #+begin_src sh
 # delimiter comes after -F
 awk -F : '{print $5, $3, $8}' /etc/passwd
+
+# You can only print fields of a regex using
+awk '/systemd/ { print $1 }' /etc/passwd
+#+end_src
+*** Print lines matching regex
+#+begin_src shell
+awk '/MA/' list.txt
+#+end_src
+** sed
+- =-n=: prints only modified lines when coupled with ~/p~ at the end of the sed expression.
+*** Multiple expressions
+#+begin_src sh
+sed -e 's/ MA/, Massachusetts/' -e 's/ PA/, Pennsylvania/' file.txt
+#+end_src
+*** Scripting sed
+**** File
+#+begin_src shell
+s/ MA/, Massachusetts/
+s/ PA/, Pennsylvania/
+s/ CA/, California/
+s/ VA/, Virginia/
+s/ OK/, Oklahoma/
+#+end_src
+**** Command
+#+begin_src shell
+# Applies the script sed-script.sed to the file list.txt
+sed -f sed-script.sed list.txt
+
+# You can save the input to a new file w/
+sed -f sed-script.sed list.txt > newlist.txt
+#+end_src
+** awk/sed
+#+begin_src sh
+# You can subsitute strings, and then print with awk based on the new substitutions.
+# $ cat script.sed
+# s/ CA/, California/
+# s/ MA/, Massachusetts
+sed -f script.sed list.txt | awk -F, '{ print $4 }'
+# => California
+# => Massachusetts
 #+end_src
 ** find
 *** Search for files older than 7 days (and delete them)
@@ -126,8 +168,8 @@ $ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
 # => 240 192.168.1.2 200
 # => 239 192.168.1.3 200
 #+end_src
-** dmidecode
-=dmidecode= is nifty for finding information about hardware
+** dmidecode/lshw
+=dmidecode= is nifty for finding information about hardware. You can also use =lshw= (and =grep=) to find information about your hardware as well.
 
 #+begin_src sh
 # Find SMBIOS data
@@ -148,6 +190,7 @@ $ sudo dmidecode -s
 # To fine tune the search, enter one of the options from the returned list
 $ sudo dmidecode -s bios-vendor
 #+end_src
+
 * Permissions
 ** Umask
 Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).

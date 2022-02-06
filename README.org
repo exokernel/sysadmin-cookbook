@@ -153,7 +153,8 @@ alias rm="trash -v --trash-dir=$HOME/.trash"
 - =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
 - =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
   #+begin_src shell
-  dog-dig () { dog "$1" A AAAA MX NS TXT }
+dog-dig () { dog "$1" A AAAA MX NS TXT }
+alias dig="dog-dig"
   #+end_src
 - =tldr=: outputs a summarized manual page, with common usage examples.
 - =cheat=: similar to =tldr=, but outputs only common usage examples.

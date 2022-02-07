@@ -79,6 +79,11 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 :END:
   
 * Shell Scripting
+** Debugging
+#+begin_src shell
+/usr/bin/env bash
+set -xv
+#+end_src
 ** Reuse arguments (!$)
 #+begin_src shell
 $ ls /tmp
@@ -100,7 +105,7 @@ $ echo $?
   $ ls
   # Creates file-1.md file-2.md file-3.md
   #+end_src
-** EZ backup with cp
+** EZ backup with cp (or rsync)
 #+begin_src shell
 $ cp file.txt{,.bak}
 $ ls -l
@@ -118,9 +123,11 @@ Because for some reason I forget them all the time
 *** stderr
 #+begin_src shell
 $ >&2 echo hello
-hello
 #+end_src
-
+*** stdout & stderr
+#+begin_src shell
+$ 1>&2 echo hello
+#+end_src
 ** Substrings
 Hash =#= will find the first occurence from the start, and modulo =%= will grab the first occurence from the end. =*= for mc-globbin'. If you're feeling greedy, =##= and =%%=.
 #+begin_src shell
@@ -151,9 +158,10 @@ alias rm="trash -v --trash-dir=$HOME/.trash"
 - =ripgrep=: a faster alternative to =grep=.
 - =exa=: a modern replacement for =ls= with sane defaults.
 - =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
+- =gdu=: interactive disk usage program with sane human readable defaults.
 - =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
   #+begin_src shell
-dog-dig () { dog "$1" A AAAA MX NS TXT }
+dog-dig () { dog "$1" A AAAA MX NS TXT SOA }
 alias dig="dog-dig"
   #+end_src
 - =tldr=: outputs a summarized manual page, with common usage examples.
@@ -524,11 +532,6 @@ server {
 * Scripts
 Smaller functions are in =zsh_functions=, but it's impractical to put larger scripts there so they live in =~/scripts= instead so I can call them with aliases. 
 
-** Debugging
-#+begin_src shell
-/usr/bin/env bash
-set -xv
-#+end_src
 
 ** ls -la with numerical file permissions/mode
 Warning: AWK BLACK MAGIC AHEAD

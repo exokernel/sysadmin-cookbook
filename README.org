@@ -11,18 +11,20 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 :END:
 :CONTENTS:
 - [[#shell-scripting][Shell Scripting]]
+  - [[#debugging][Debugging]]
   - [[#reuse-arguments-][Reuse arguments (!$)]]
   - [[#last-exit-code-][Last Exit Code ($?)]]
   - [[#-curly-brace-expansion-][{ Curly Brace Expansion }]]
-  - [[#ez-backup-with-cp][EZ backup with cp]]
+  - [[#ez-backup-with-cp-or-rsync][EZ backup with cp (or rsync)]]
   - [[#repeat-command][Repeat command]]
   - [[#streams][Streams]]
     - [[#stderr][stderr]]
+    - [[#stdout--stderr][stdout & stderr]]
   - [[#substrings][Substrings]]
 - [[#useful-programs][Useful programs]]
   - [[#trash-cli][trash-cli]]
   - [[#coreutil-replacements][Coreutil replacements]]
-- [[#utilities][Utilities]]
+- [[#common-cli-utilities][Common CLI Utilities]]
   - [[#cut][cut]]
     - [[#cut---list-all-users][cut - List all users]]
   - [[#awk][awk]]
@@ -46,6 +48,8 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
   - [[#check-if-remote-port-is-open][Check if remote port is open]]
   - [[#check-isp-ip][Check ISP IP]]
   - [[#bonding-methods][Bonding Methods]]
+  - [[#http-method-binaries][HTTP Method Binaries]]
+  - [[#check-sites-http-method-whitelist][Check sites HTTP method whitelist]]
 - [[#sql][SQL]]
   - [[#installation][Installation]]
   - [[#files][Files]]
@@ -71,7 +75,6 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
   - [[#load-balancer-reference][Load Balancer Reference]]
   - [[#reverse-proxy-reference][Reverse Proxy Reference]]
 - [[#scripts][Scripts]]
-  - [[#debugging][Debugging]]
   - [[#ls--la-with-numerical-file-permissionsmode][ls -la with numerical file permissions/mode]]
 - [[#misc][Misc]]
 - [[#reference][Reference]]
@@ -313,9 +316,10 @@ Client-SSL-Cert-Subject: /CN=example.gov
 Client-SSL-Cipher: TLS_AES_256_GCM_SHA384
 Client-SSL-Socket-Class: IO::Socket::SSL
 #+end_src
+
 ** Check sites HTTP method whitelist
 #+begin_src shell
-nmap -p443 --script http-methods <IP ADDR>
+nmap -p443 --script http-methods [IP ADDR]
 #+end_src
 
 Output:

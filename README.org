@@ -166,7 +166,7 @@ alias dig="dog-dig"
   #+end_src
 - =tldr=: outputs a summarized manual page, with common usage examples.
 - =cheat=: similar to =tldr=, but outputs only common usage examples.
-* Utilities
+* Common CLI Utilities
 ** cut
 *** cut - List all users
 #+begin_src shell
@@ -289,6 +289,46 @@ $ curl ifconfig.co
 =broadcast=: transmit network packets on all slave network interfaces (provides fault tolerance).
 
 =802.3ad, LACP=: aggregation groups that share the same speed and duplex settings. (provides fault tolerance and load-balancing).
+** HTTP Method Binaries
+=GET=, =HEAD=, etc.. all have binaries symlinked to lsp_request. Like their binary name implies, they can be used to use HTTP methods on a site. For example:
+
+#+begin_src shell
+$ HEAD example.gov
+
+# Output
+200 OK
+Connection: close
+Date: Wed, 23 APR 2999 23:18:56 GMT
+Accept-Ranges: bytes
+ETag: "498-5d8a3050b5915"
+Server: WebServer/Dist
+Content-Length: 1176
+Content-Type: text/html; charset=UTF-8
+Last-Modified: Tue, 99 APR 2999 22:39:19 GMT
+Client-Date: Wed, 99 APR 2999 23:18:56 GMT
+Client-Peer: 1.1.1.1:443
+Client-Response-Num: 1
+Client-SSL-Cert-Issuer: /C=US/O=Let's Encrypt/CN=R3
+Client-SSL-Cert-Subject: /CN=example.gov
+Client-SSL-Cipher: TLS_AES_256_GCM_SHA384
+Client-SSL-Socket-Class: IO::Socket::SSL
+#+end_src
+** Check sites HTTP method whitelist
+#+begin_src shell
+nmap -p443 --script http-methods <IP ADDR>
+#+end_src
+
+Output:
+#+begin_src
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-10-23 08:59 +03
+Nmap scan report for <IPAddress>
+Host is up (0.0032s latency).
+PORT    STATE SERVICE
+443/tcp open  https
+| http-methods: GET POST OPTIONS HEAD TRACE
+| Potentially risky methods: TRACE
+|_See http://nmap.org/nsedoc/scripts/http-methods.htmlNmap done: 1 IP address (1 host up) scanned in 0.10 seconds
+#+end_src
 
 * SQL
 ** Installation

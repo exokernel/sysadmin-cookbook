@@ -87,6 +87,10 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 /usr/bin/env bash
 set -xv
 #+end_src
+** for loops
+#+begin_src shell
+for i in ./*; do file $i; done
+#+end_src
 ** Reuse arguments (!$)
 #+begin_src shell
 $ ls /tmp
@@ -150,30 +154,19 @@ death met
 $ echo ${var%%a*} # Cuts after occurence
 de
 #+end_src
-* Useful programs
-** trash-cli
-=trash-cli= lets you emulate common file explorer 'Trash Can' functionality on the cli. Essential to alias this to =rm=, so you never unncecessarily/accidentally nuke a file.
-#+begin_src shell
-alias rm="trash -v --trash-dir=$HOME/.trash"
-#+end_src
-** Coreutil replacements
-- =bat=: more modern =cat=, with automatic paging and syntax highlighting.
-- =ripgrep=: a faster alternative to =grep=.
-- =exa=: a modern replacement for =ls= with sane defaults.
-- =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
-- =gdu=: interactive disk usage program with sane human readable defaults.
-- =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
-  #+begin_src shell
-dog-dig () { dog "$1" A AAAA MX NS TXT SOA }
-alias dig="dog-dig"
-  #+end_src
-- =tldr=: outputs a summarized manual page, with common usage examples.
-- =cheat=: similar to =tldr=, but outputs only common usage examples.
-* Common CLI Utilities
+* CLI Utilities
 ** cut
 *** cut - List all users
 #+begin_src shell
 $ cut -d: -f1 /etc/passwd
+#+end_src
+** grep
+To grep through binary files as if they were text:
+#+begin_src shell
+grep -a 'pattern' data.txt
+
+# Alternatively
+strings data.txt | grep -E 'pattern'
 #+end_src
 ** awk
 - =-F=: Allows you to specify a field specifier with a delimiting character (such as comma, colon, etc). For example: =awk -F: '{ print $1 }' /etc/passwd=
@@ -228,12 +221,22 @@ sed -f script.sed list.txt | awk -F, '{ print $4 }'
 #+begin_src shell
 find /opt/neteng/mtr/reports -mtime +7 -delete
 #+end_src
+*** Hide permission denied files
+#+begin_src shell
+# Just stream stderr to /dev/null
+find / -size 33 2>/dev/null
+#+end_src
 ** du
 #+begin_src shell
 $ du -sh * | sort -h
 #+end_src
 ** sort
-*** Sort unique occurences of a line in a file
+**** Sort unique occurences of a line in a file
+Against intuition, uniq only sorts adjacent lines, so you need to sort the file first in order to get like-strings at the top. As far as I understand it: uniq can then filter it as you'd expect it to.
+#+begin_src shell
+sort data.txt | uniq -u
+#+end_src
+
 If you need to sort through unique instances of an item in a file, use =sort -u= or pipe (|) =uniq=. The =-c= flag in uniq will put the count of each uniq item next to the value itself. Say, you need to sort and count unique IPs from most occuring to least occuring and returning with 200 codes:
 #+begin_src shell
 $ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
@@ -263,7 +266,45 @@ $ sudo dmidecode -s
 # To fine tune the search, enter one of the options from the returned list
 $ sudo dmidecode -s bios-vendor
 #+end_src
-
+** base64
+#+begin_src shell
+# Decode base64 encoding
+base64 -d file.txt
+#+end_src
+** tr
+Decode ROT13 a.k.a. encoding where string chars are moved 13 chars forward alphabetically.
+#+begin_src shell
+cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+#+end_src
+** openssl
+One way to establish an SSL connection to a host and send it data over a network is the openssl command line utility, for this purpose its much better than telnet.
+#+begin_src shell
+$ openssl
+> s_client -connect localhost:20000
+#+end_src
+** nc
+If you want to transmit data over a port, or open a listening connection
+#+begin_src shell
+echo "something" | nc -l localhsot 61337
+#+end_src
+** trash-cli
+=trash-cli= lets you emulate common file explorer 'Trash Can' functionality on the cli. Essential to alias this to =rm=, so you never unncecessarily/accidentally nuke a file.
+#+begin_src shell
+alias rm="trash -v --trash-dir=$HOME/.trash"
+#+end_src
+** GNU coreutil replacements
+- =bat=: more modern =cat=, with automatic paging and syntax highlighting.
+- =ripgrep=: a faster alternative to =grep=.
+- =exa=: a modern replacement for =ls= with sane defaults.
+- =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
+- =gdu=: interactive disk usage program with sane human readable defaults.
+- =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
+  #+begin_src shell
+dog-dig () { dog "$1" A AAAA MX NS TXT SOA }
+alias dig="dog-dig"
+  #+end_src
+- =tldr=: outputs a summarized manual page, with common usage examples.
+- =cheat=: similar to =tldr=, but outputs only common usage examples.
 * Permissions
 ** Umask
 Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).
@@ -605,6 +646,7 @@ ls -l | awk '{
 * Misc
 - =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
 - =trash-cli=: Essential "recycle bin" command line utility. I use it to rebind rm so I never yeet things off the planet.
+- In order to open a file named =-=, you have to specify the absolute path (i.e. =cat ./-=)
 * Reference
 - [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]
 - [[https://github.com/dylanaraps/pure-sh-bible][Pure POSIX shell Bible]]

@@ -87,6 +87,12 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 /usr/bin/env bash
 set -xv
 #+end_src
+** wildcarding through nested directories
+In order to wildcard through nested directories, we use the =**= glob.
+#+begin_src shell
+# This will sed replace all occurences of an extension with the basename of the file without the extension recusively through nested directories.
+rename 's/\..*//.' **
+#+end_src
 ** for loops
 #+begin_src shell
 for i in ./*; do file $i; done
@@ -98,6 +104,7 @@ file1.txt file2.txt file3.txt
 $ cd !$
 /tmp
 #+end_src
+** $0 expands to your your shell (/bin/sh, /bin/bash)
 ** Last Exit Code ($?)
 #+begin_src shell
 $ ls /tmp
@@ -161,12 +168,17 @@ de
 $ cut -d: -f1 /etc/passwd
 #+end_src
 ** grep
-To grep through binary files as if they were text:
+- To grep through binary files as if they were text:
 #+begin_src shell
 grep -a 'pattern' data.txt
 
 # Alternatively
 strings data.txt | grep -E 'pattern'
+#+end_src
+
+- To only print filenames (and not their content) that match a string
+#+begin_src shell
+grep -lR string
 #+end_src
 ** awk
 - =-F=: Allows you to specify a field specifier with a delimiting character (such as comma, colon, etc). For example: =awk -F: '{ print $1 }' /etc/passwd=
@@ -182,6 +194,11 @@ awk '/systemd/ { print $1 }' /etc/passwd
 *** Print lines matching regex
 #+begin_src shell
 awk '/MA/' list.txt
+#+end_src
+*** Add all numbers in a file
+#+begin_src shell
+# For every integer in sum-me.txt, we += it to sum, and then once EOF is reached, we print the variable.
+awk '{ sum += $1 } END { print sum }' sum-me.txt
 #+end_src
 ** sed
 - =-n=: prints only modified lines when coupled with ~/p~ at the end of the sed expression.
@@ -217,6 +234,11 @@ sed -f script.sed list.txt | awk -F, '{ print $4 }'
 # => Massachusetts
 #+end_src
 ** find
+*** Execute Commands
+#+begin_src shell
+# This will recusively find all files named access.log and execute grep on all files that have the string 500 in them.
+find . -name access.log* -exec grep 500 {} \;
+#+end_src
 *** Search for files older than 7 days (and delete them)
 #+begin_src shell
 find /opt/neteng/mtr/reports -mtime +7 -delete
@@ -225,6 +247,17 @@ find /opt/neteng/mtr/reports -mtime +7 -delete
 #+begin_src shell
 # Just stream stderr to /dev/null
 find / -size 33 2>/dev/null
+#+end_src
+*** Recusively list directory contents  without leading directory path
+#+begin_src shell
+find . -type f -exec basename {} \;
+#+end_src
+** basename
+Removes leading directory paths to files when listing.
+** rename
+#+begin_src shell
+# This will sed replace all occurences of an extension with the basename of the file without the extension recusively through nested directories.
+rename 's/\..*//.' **
 #+end_src
 ** du
 #+begin_src shell
@@ -243,6 +276,20 @@ $ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
 
 # => 240 192.168.1.2 200
 # => 239 192.168.1.3 200
+#+end_src
+** seq
+seq prints a sequence of numbers, but you can use it to loop over a range of numbers. Note that you can start seq with a number such as 0001.
+#+begin_src shell
+# This program will echo a passphrase + 4 digit pin to a server listening on a port which we are connecting to via netcat (nc)
+for foo in `seq -w 0001 9999`; do
+    echo "UoMYTrfrBFHyQXmg6gzctqAwOmw1IohZ $foo";
+done | nc localhost 30002
+#+end_src
+** script
+=script= can start an interactive session which records terminal output and records it to a file.
+#+begin_src shell
+$ script
+# -> creates typescript in $(pwd) with output of commands entered after starting script.
 #+end_src
 ** dmidecode/lshw
 =dmidecode= is nifty for finding information about hardware. You can also use =lshw= (and =grep=) to find information about your hardware as well.
@@ -272,10 +319,21 @@ $ sudo dmidecode -s bios-vendor
 base64 -d file.txt
 #+end_src
 ** tr
-Decode ROT13 a.k.a. encoding where string chars are moved 13 chars forward alphabetically.
+- Decode ROT13 a.k.a. encoding where string chars are moved 13 chars forward alphabetically.
 #+begin_src shell
 cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
 #+end_src
+
+- Split file contents into new lines by delimiter
+  #+begin_src shell
+# We are using the comma as a delimiter in tr
+cat file.txt | tr ',', '\n'
+  #+end_src
+
+- Remove spaces from middle of word
+  #+begin_src shell
+ls | tr ' ' '.'
+  #+end_src
 ** openssl
 One way to establish an SSL connection to a host and send it data over a network is the openssl command line utility, for this purpose its much better than telnet.
 #+begin_src shell
@@ -314,6 +372,8 @@ Example
     - System wide setting: ~UMASK~ in =/etc/login.defs=
     - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
 
+* sshd
+- =sshd -t= - flag for test mode (similar to nginx -t). Will test the configuration of sshd_config.
 * Networking
 ** Check if remote port is open
 #+begin_src shell

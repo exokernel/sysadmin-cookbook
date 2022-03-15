@@ -12,7 +12,10 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
 :CONTENTS:
 - [[#shell-scripting][Shell Scripting]]
   - [[#debugging][Debugging]]
+  - [[#wildcarding-through-nested-directories][wildcarding through nested directories]]
+  - [[#for-loops][for loops]]
   - [[#reuse-arguments-][Reuse arguments (!$)]]
+  - [[#0-expands-to-your-your-shell-binsh-binbash][$0 expands to your your shell (/bin/sh, /bin/bash)]]
   - [[#last-exit-code-][Last Exit Code ($?)]]
   - [[#-curly-brace-expansion-][{ Curly Brace Expansion }]]
   - [[#ez-backup-with-cp-or-rsync][EZ backup with cp (or rsync)]]
@@ -21,15 +24,16 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
     - [[#stderr][stderr]]
     - [[#stdout--stderr][stdout & stderr]]
   - [[#substrings][Substrings]]
-- [[#useful-programs][Useful programs]]
-  - [[#trash-cli][trash-cli]]
-  - [[#coreutil-replacements][Coreutil replacements]]
-- [[#common-cli-utilities][Common CLI Utilities]]
+- [[#cli-utilities][CLI Utilities]]
   - [[#cut][cut]]
     - [[#cut---list-all-users][cut - List all users]]
+  - [[#grep][grep]]
   - [[#awk][awk]]
     - [[#simple-field-column-print][Simple field (column) print]]
     - [[#print-lines-matching-regex][Print lines matching regex]]
+    - [[#add-all-numbers-in-a-file][Add all numbers in a file]]
+    - [[#print-nth-line][Print nth line]]
+    - [[#nf-number-of-fields][NF (Number of Fields)]]
   - [[#sed][sed]]
     - [[#multiple-expressions][Multiple expressions]]
     - [[#scripting-sed][Scripting sed]]
@@ -37,45 +41,64 @@ Here is a collection of neat aliases, scripts, shell-isms, tips, and tricks of t
       - [[#command][Command]]
   - [[#awksed][awk/sed]]
   - [[#find][find]]
+    - [[#execute-commands][Execute Commands]]
     - [[#search-for-files-older-than-7-days-and-delete-them][Search for files older than 7 days (and delete them)]]
-  - [[#du][du]]
+    - [[#hide-permission-denied-files][Hide permission denied files]]
+    - [[#recusively-list-directory-contents--without-leading-directory-path][Recusively list directory contents  without leading directory path]]
+  - [[#rename][rename]]
   - [[#sort][sort]]
     - [[#sort-unique-occurences-of-a-line-in-a-file][Sort unique occurences of a line in a file]]
-  - [[#dmidecodelshw][dmidecode/lshw]]
-- [[#permissions][Permissions]]
+  - [[#seq][seq]]
+  - [[#tr][tr]]
+  - [[#script][script]]
+  - [[#gnu-coreutil-replacements][GNU coreutil replacements]]
+  - [[#hacks][Hacks]]
+    - [[#print-only-first-instance-of-duplicate-line][Print only first instance of duplicate line]]
+  - [[#misc][Misc]]
+    - [[#basename---remove-leading-directory-paths-from-files][basename - remove leading directory paths from files]]
+    - [[#dirname---lists-directory-path-of-file][dirname - lists directory path of file]]
+    - [[#base64---encodedecode-base64][base64 - encode/decode base64]]
+    - [[#tac---reverses-output-line-by-line][tac - reverses output line by line]]
+    - [[#rev---reverses-output-char-by-char][rev - reverses output char by char]]
+- [[#regex][Regex]]
+- [[#system-administration][System Administration]]
   - [[#umask][Umask]]
+  - [[#sshd][sshd]]
+  - [[#journalctl][journalctl]]
+  - [[#systemd][systemd]]
+    - [[#useful-commands][Useful commands]]
+    - [[#run-level-management][Run level management]]
+    - [[#unit-file-reference][Unit File Reference]]
+      - [[#service-unit-files][Service Unit Files]]
+      - [[#mount-unit-files][Mount Unit Files]]
+      - [[#socket-unit-file][Socket Unit File]]
+    - [[#systemd-status][Systemd Status]]
+  - [[#cronatd][cron/atd]]
+    - [[#cron][cron]]
+    - [[#atd][atd]]
+  - [[#dmidecodelshw][dmidecode/lshw]]
+  - [[#du][du]]
 - [[#networking][Networking]]
+  - [[#openssl][openssl]]
   - [[#check-if-remote-port-is-open][Check if remote port is open]]
   - [[#check-isp-ip][Check ISP IP]]
   - [[#bonding-methods][Bonding Methods]]
   - [[#http-method-binaries][HTTP Method Binaries]]
   - [[#check-sites-http-method-whitelist][Check sites HTTP method whitelist]]
+  - [[#netcat][netcat]]
 - [[#sql][SQL]]
   - [[#installation][Installation]]
   - [[#files][Files]]
   - [[#logs][Logs]]
   - [[#general][General]]
   - [[#create-user][Create User]]
-- [[#journalctl][journalctl]]
-- [[#systemd][systemd]]
-  - [[#useful-commands][Useful commands]]
-  - [[#run-level-management][Run level management]]
-  - [[#unit-file-reference][Unit File Reference]]
-    - [[#service-unit-files][Service Unit Files]]
-    - [[#mount-unit-files][Mount Unit Files]]
-    - [[#socket-unit-file][Socket Unit File]]
-  - [[#systemd-status][Systemd Status]]
-- [[#cronatd][cron/atd]]
-  - [[#cron][cron]]
-  - [[#atd][atd]]
-- [[#apachehttpd][apache/httpd]]
-  - [[#troubleshooting][Troubleshooting]]
-- [[#nginx][nginx]]
-  - [[#security-reference][Security Reference]]
-  - [[#load-balancer-reference][Load Balancer Reference]]
-  - [[#reverse-proxy-reference][Reverse Proxy Reference]]
-- [[#scripts][Scripts]]
-  - [[#ls--la-with-numerical-file-permissionsmode][ls -la with numerical file permissions/mode]]
+- [[#web-servers][Web Servers]]
+  - [[#apachehttpd][apache/httpd]]
+    - [[#troubleshooting][Troubleshooting]]
+  - [[#nginx][nginx]]
+    - [[#security-reference][Security Reference]]
+    - [[#load-balancer-reference][Load Balancer Reference]]
+    - [[#reverse-proxy-reference][Reverse Proxy Reference]]
 - [[#misc][Misc]]
 - [[#reference][Reference]]
 - [[#notes][Notes]]
@@ -168,7 +191,7 @@ de
 $ cut -d: -f1 /etc/passwd
 #+end_src
 ** grep
-- To grep through binary files as if they were text:
+*** grep through binary files as if they were text:
 #+begin_src shell
 grep -a 'pattern' data.txt
 
@@ -176,9 +199,13 @@ grep -a 'pattern' data.txt
 strings data.txt | grep -E 'pattern'
 #+end_src
 
-- To only print filenames (and not their content) that match a string
+*** Only print filenames (and not their content) that match a string
 #+begin_src shell
 grep -lR string
+#+end_src
+*** Sort IPv4 Addresses in Netstat output
+#+begin_src shell
+grep ^tcp\  netstat.out | grep LISTEN | cut -d':' -f2 | cut -d' ' -f1 | sort -gur
 #+end_src
 ** awk
 - =-F=: Allows you to specify a field specifier with a delimiting character (such as comma, colon, etc). For example: =awk -F: '{ print $1 }' /etc/passwd=
@@ -204,6 +231,20 @@ awk '{ sum += $1 } END { print sum }' sum-me.txt
 #+begin_src shell
 # awk keeps a running count of lines bound to NR
 cat file.txt | awk 'NR==25'
+#+end_src
+*** NR (Number of Records)
+An Awk special variable that can be used in the action block to repesent the number of lines being processed.
+
+A helpful example is using NR to grab a line of text at a specific number line.
+#+begin_src shell
+# Grabs the 25th line of file.txt
+cat file.txt | awk 'NR==25'
+#+end_src
+
+Another way we can use this is if we want to filter lines by Nth instance.
+#+begin_src shell
+# we recusively grep for 404 in access.log with the -B flag in order to print one line before the match as well. We can pass this into awk and use maths to grab an arbitrary line.
+grep -Rh -B1 "404" **/access.log* | awk 'NR%3==1'
 #+end_src
 *** NF (Number of Fields)
 NF is a predefined variable whose value is the number of fields in the current record. awk automatically updates the value of NF each time it reads a record.
@@ -265,6 +306,16 @@ find / -size 33 2>/dev/null
 #+begin_src shell
 find . -type f -exec basename {} \;
 #+end_src
+*** -printf flag
+Much like shell/C, printf can help format output of find.
+#+begin_src shell
+# Formats output to display on newlines.
+find . -type f -printf "%f\n"
+#+end_src
+*** Exclude regex pattern
+#+begin_src shell
+find . -type f ! -regex '.*\(.exe\|.txt\)' -delete
+#+end_src
 ** rename
 #+begin_src shell
 # This will sed replace all occurences of an extension with the basename of the file without the extension recusively through nested directories.
@@ -283,6 +334,11 @@ $ awk '{print $4, $5}' | grep 200 | sort -u # or you can pipe this to uniq -c
 
 # => 240 192.168.1.2 200
 # => 239 192.168.1.3 200
+#+end_src
+*** Sort output of file by field
+#+begin_src shell
+# sort by unique & numerical, and by the 2nd field.
+sort -un -k2 file.txt
 #+end_src
 ** seq
 seq prints a sequence of numbers, but you can use it to loop over a range of numbers. Note that you can start seq with a number such as 0001.
@@ -308,6 +364,11 @@ cat file.txt | tr ',', '\n'
   #+begin_src shell
 ls | tr ' ' '.'
   #+end_src
+** diff
+To show only files that differ from an arbitrary file.
+#+begin_src shell
+diff *.bin --to-file base.bin | cut -d ' ' -f3
+#+end_src
 ** script
 =script= can start an interactive session which records terminal output and records it to a file.
 #+begin_src shell
@@ -361,8 +422,9 @@ dirname **/*.tf
 # Decode base64 encoding
 base64 -d file.txt
 #+end_src
-*** tac - reverses output line by line
+*** tac - (cat spelled backwords) reverses output line by line
 *** rev - reverses output char by char
+*** factor - get prime factorizations of integers
 * Regex
 - =**= - Recursively glob
 * System Administration

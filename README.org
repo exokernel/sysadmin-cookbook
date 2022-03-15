@@ -200,6 +200,19 @@ awk '/MA/' list.txt
 # For every integer in sum-me.txt, we += it to sum, and then once EOF is reached, we print the variable.
 awk '{ sum += $1 } END { print sum }' sum-me.txt
 #+end_src
+*** Print nth line
+#+begin_src shell
+# awk keeps a running count of lines bound to NR
+cat file.txt | awk 'NR==25'
+#+end_src
+*** NF (Number of Fields)
+NF is a predefined variable whose value is the number of fields in the current record. awk automatically updates the value of NF each time it reads a record.
+
+This is useful when you want only values with a specific number of fields. In the case of sorting prime factorizations to only show uniqe prime numbers:
+#+begin_src shell
+# sort -u bunch_of_numbers.txt gives us a list of unique integers, which we then pipe to factor to get the prime factorizations, and then we tell awk via the NF variable that we only want values that have less than 3 fields which indicates that the number is prime.
+sort -u bunch_of_numbers.txt | factor | awk 'NF<3'
+#+end_src
 ** sed
 - =-n=: prints only modified lines when coupled with ~/p~ at the end of the sed expression.
 *** Multiple expressions
@@ -252,19 +265,13 @@ find / -size 33 2>/dev/null
 #+begin_src shell
 find . -type f -exec basename {} \;
 #+end_src
-** basename
-Removes leading directory paths to files when listing.
 ** rename
 #+begin_src shell
 # This will sed replace all occurences of an extension with the basename of the file without the extension recusively through nested directories.
 rename 's/\..*//.' **
 #+end_src
-** du
-#+begin_src shell
-$ du -sh * | sort -h
-#+end_src
 ** sort
-**** Sort unique occurences of a line in a file
+*** Sort unique occurences of a line in a file
 Against intuition, uniq only sorts adjacent lines, so you need to sort the file first in order to get like-strings at the top. As far as I understand it: uniq can then filter it as you'd expect it to.
 #+begin_src shell
 sort data.txt | uniq -u
@@ -285,12 +292,195 @@ for foo in `seq -w 0001 9999`; do
     echo "UoMYTrfrBFHyQXmg6gzctqAwOmw1IohZ $foo";
 done | nc localhost 30002
 #+end_src
+** tr
+- Decode ROT13 a.k.a. encoding where string chars are moved 13 chars forward alphabetically.
+#+begin_src shell
+cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+#+end_src
+
+- Split file contents into new lines by delimiter
+  #+begin_src shell
+# We are using the comma as a delimiter in tr
+cat file.txt | tr ',', '\n'
+  #+end_src
+
+- Remove spaces from middle of word
+  #+begin_src shell
+ls | tr ' ' '.'
+  #+end_src
 ** script
 =script= can start an interactive session which records terminal output and records it to a file.
 #+begin_src shell
 $ script
 # -> creates typescript in $(pwd) with output of commands entered after starting script.
 #+end_src
+** GNU coreutil replacements
+- =bat=: more modern =cat=, with automatic paging and syntax highlighting.
+- =ripgrep=: a faster alternative to =grep=.
+- =exa=: a modern replacement for =ls= with sane defaults.
+- =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
+- =gdu=: interactive disk usage program with sane human readable defaults.
+- =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
+  #+begin_src shell
+dog-dig () { dog "$1" A AAAA MX NS TXT SOA }
+alias dig="dog-dig"
+  #+end_src
+- =tldr=: outputs a summarized manual page, with common usage examples.
+- =cheat=: similar to =tldr=, but outputs only common usage examples.
+  =trash-cli= lets you emulate common file explorer 'Trash Can' functionality on the cli. Essential to alias this to =rm=, so you never unncecessarily/accidentally nuke a file.
+  #+begin_src shell
+  alias rm="trash -v --trash-dir=$HOME/.trash"
+  #+end_src
+** Hacks
+Home to the clever outcasts
+*** Print only first instance of duplicate line
+#+begin_src shell
+# cat -n to get numbered output, sort -uk2 to get unique sort, sort -nk1 to sort numerically preserving order, and cut to chop off cats -n.
+cat -n faces.txt | sort -uk2 | sort -nk1 | cut -f2-
+#+end_src
+
+This can also be done by awk, but since I don't quite understand it fully (yet) it lives in here and not the =awk= section.
+#+begin_src sh
+awk '!visited[$0]++' faces.txt
+#+end_src
+** Misc
+For interesting utilities that don't warrant their own section
+
+*** basename - remove leading directory paths from files
+Removes leading directory paths to files when listing.
+#+begin_src shell
+find . -type f -exec basename {} \;
+#+end_src
+*** dirname - lists directory path of file
+#+begin_src shell
+# recusively lists directories containing files with a .tf extension
+dirname **/*.tf
+#+end_src
+*** base64 - encode/decode base64
+#+begin_src shell
+# Decode base64 encoding
+base64 -d file.txt
+#+end_src
+*** tac - reverses output line by line
+*** rev - reverses output char by char
+* Regex
+- =**= - Recursively glob
+* System Administration
+** Umask
+Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).
+
+Example
+    - 027 = (7 - 0 = 7 User), (7 - 2 = 5 Group), (7 - 7 = 0 Other) = 750
+    - System wide setting: ~UMASK~ in =/etc/login.defs=
+    - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
+
+** sshd
+- =sshd -t= - flag for test mode (similar to nginx -t). Will test the configuration of sshd_config.
+** journalctl
+=sudo journalctl -u apache2.service --since today --no-pager=: only show today logging output
+** systemd
+*** Useful commands
+=systemctl list-unit-files | grep enabled=: Show enabled units
+
+=systemctl --type=service=: Show only service units
+
+=systemctl list-units --type=service --all=: Shows all active & inactive service units
+
+=systemctl --failed --type=service=: Shows failed services
+
+=systemctl status -l httpd.service=: Shows detailed status information
+
+*** Run level management
+=systemctl isolate=: change runlevel
+=systemctl get-default=: see default runlevel
+| Run Level | Target            |
+|         0 | poweroff.target   |
+|         1 | rescue.target     |
+|         3 | multi-user.target |
+|         5 | graphical.target  |
+|         6 | reboot.target     |
+| emergency | emergency.target  |
+*** Unit File Reference
+**** Service Unit Files
+#+begin_src shell
+[Unit]
+# Describes the unit and dependencies.
+Description=Vsftpd ftp daemon
+After=network.target
+Before=graphical.target
+
+# Describes how to start and stop the service, and request status.
+[Service]
+Type=forking|oneshot
+ExecStart=/usr/sbin/vsftpd /etc/vsftpd/vstpd.conf
+
+# Describes which target this unit needs to be started in.
+[Install]
+WantedBy=multi-user.target
+#+end_src
+**** Mount Unit Files
+#+begin_src shell
+[Unit]
+# Describes the unit and dependencies.
+Description=Temporary Dir (/tmp/stuff)
+Documentation=man:somemanpage
+ConditionPathIsSymbolicLink=!/tmp/stuff
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=swap.target
+
+# Describes mount properties
+What=tmpfs
+Where=/tmp/stuff
+Type=tmpfs
+Options=mode=1777,strictatime,nosuid,nodev
+
+#+end_src
+**** Socket Unit File
+#+begin_src shell
+[Unit]
+Description=Cockpit Web Service Socket
+Documentation=man:cockpit-ws(8)
+Wants=cockpit-motd.service
+
+[Socket]
+# Defines tcp port that systemd should be listening to
+ListenStream=9090
+# For UDP
+ListenDatagram=9090
+ExecStartPost=-/usr/share/cockpit/motd/update-motd '' localhost
+ExecStartPost=-/bin/ln -snf active.motd /run/cockpit/motd
+ExecStopPost=-/bin/ln -snf /usr/share/cockpit/motd/inactive.motd /run/cockpit/motd
+
+[Install]
+WantedBy=sockets.target
+#+end_src
+
+*** Systemd Status
+| Status          | Description                                                        |
+| Loaded          | Unit file has been processed and unit is active                    |
+| Active(running) | Running with one or more active                                    |
+|                 | processes                                                          |
+| Active(exited)  | Successfully completed a one-time run                              |
+| Active(waiting) | Running and waiting for an event                                   |
+| Inactive(dead)  | Not running                                                        |
+| Enabled         | Started at boot-time                                               |
+| Disabled        | Not started at boot-time                                           |
+| Static          | Cannot be enabled but may be started by another unit automatically |
+** cron/atd
+*** cron
+|Fields      |          |
+|minute      |0-59      |
+|hour        |0-23      |
+|day-of-month|1-31      |
+|month       |1-12      |
+|day-of-week |0-7       |
+
+*** atd
+  Make sure atd.service is enabled and running
+  =atq=: check jobs
+  Examples: =at noon=, =at 14:00=
 ** dmidecode/lshw
 =dmidecode= is nifty for finding information about hardware. You can also use =lshw= (and =grep=) to find information about your hardware as well.
 
@@ -313,68 +503,17 @@ $ sudo dmidecode -s
 # To fine tune the search, enter one of the options from the returned list
 $ sudo dmidecode -s bios-vendor
 #+end_src
-** base64
+** du
 #+begin_src shell
-# Decode base64 encoding
-base64 -d file.txt
+$ du -sh * | sort -h
 #+end_src
-** tr
-- Decode ROT13 a.k.a. encoding where string chars are moved 13 chars forward alphabetically.
-#+begin_src shell
-cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-#+end_src
-
-- Split file contents into new lines by delimiter
-  #+begin_src shell
-# We are using the comma as a delimiter in tr
-cat file.txt | tr ',', '\n'
-  #+end_src
-
-- Remove spaces from middle of word
-  #+begin_src shell
-ls | tr ' ' '.'
-  #+end_src
+* Networking
 ** openssl
 One way to establish an SSL connection to a host and send it data over a network is the openssl command line utility, for this purpose its much better than telnet.
 #+begin_src shell
 $ openssl
 > s_client -connect localhost:20000
 #+end_src
-** nc
-If you want to transmit data over a port, or open a listening connection
-#+begin_src shell
-echo "something" | nc -l localhsot 61337
-#+end_src
-** trash-cli
-=trash-cli= lets you emulate common file explorer 'Trash Can' functionality on the cli. Essential to alias this to =rm=, so you never unncecessarily/accidentally nuke a file.
-#+begin_src shell
-alias rm="trash -v --trash-dir=$HOME/.trash"
-#+end_src
-** GNU coreutil replacements
-- =bat=: more modern =cat=, with automatic paging and syntax highlighting.
-- =ripgrep=: a faster alternative to =grep=.
-- =exa=: a modern replacement for =ls= with sane defaults.
-- =fd=: a modern, faster replacement for =fd= with sane and intuitive defaults.
-- =gdu=: interactive disk usage program with sane human readable defaults.
-- =dog=: an awesome replacement for dig with much informative output. Make an alias function with:
-  #+begin_src shell
-dog-dig () { dog "$1" A AAAA MX NS TXT SOA }
-alias dig="dog-dig"
-  #+end_src
-- =tldr=: outputs a summarized manual page, with common usage examples.
-- =cheat=: similar to =tldr=, but outputs only common usage examples.
-* Permissions
-** Umask
-Determines initial permission bits for new files. You are setting the bits that should *NOT* be set on a newly created file (otherwise known as the logical compliment).
-
-Example
-    - 027 = (7 - 0 = 7 User), (7 - 2 = 5 Group), (7 - 7 = 0 Other) = 750
-    - System wide setting: ~UMASK~ in =/etc/login.defs=
-    - Per User setting: users =.bashrc= with ~umask 002~ (or whatever value you'd like)
-
-* sshd
-- =sshd -t= - flag for test mode (similar to nginx -t). Will test the configuration of sshd_config.
-* Networking
 ** Check if remote port is open
 #+begin_src shell
 $ telnet 1.2.3.4 80
@@ -435,6 +574,11 @@ PORT    STATE SERVICE
 |_See http://nmap.org/nsedoc/scripts/http-methods.htmlNmap done: 1 IP address (1 host up) scanned in 0.10 seconds
 #+end_src
 
+** netcat
+If you want to transmit data over a port, or open a listening connection
+#+begin_src shell
+echo "something" | nc -l localhsot 61337
+#+end_src
 * SQL
 ** Installation
 Depending on the system, after installing mariadb/mysql you may need to initialize and start with ~--datadir~ and ~--basedir~:
@@ -465,121 +609,17 @@ GRANT ALL PRIVILEGES ON mydb.* TO 'user'@'localhost';
 FLUSH PRIVILEGES;
 #+end_src
 
-* journalctl
-=sudo journalctl -u apache2.service --since today --no-pager=: only show today logging output
-* systemd
-** Useful commands
-=systemctl list-unit-files | grep enabled=: Show enabled units
-
-=systemctl --type=service=: Show only service units
-
-=systemctl list-units --type=service --all=: Shows all active & inactive service units
-
-=systemctl --failed --type=service=: Shows failed services
-
-=systemctl status -l httpd.service=: Shows detailed status information
-
-** Run level management
-=systemctl isolate=: change runlevel
-=systemctl get-default=: see default runlevel
-| Run Level | Target            |
-|         0 | poweroff.target   |
-|         1 | rescue.target     |
-|         3 | multi-user.target |
-|         5 | graphical.target  |
-|         6 | reboot.target     |
-| emergency | emergency.target  |
-** Unit File Reference
-*** Service Unit Files
-#+begin_src shell
-[Unit]
-# Describes the unit and dependencies.
-Description=Vsftpd ftp daemon
-After=network.target
-Before=graphical.target
-
-# Describes how to start and stop the service, and request status.
-[Service]
-Type=forking|oneshot
-ExecStart=/usr/sbin/vsftpd /etc/vsftpd/vstpd.conf
-
-# Describes which target this unit needs to be started in.
-[Install]
-WantedBy=multi-user.target
-#+end_src
-*** Mount Unit Files
-#+begin_src shell
-[Unit]
-# Describes the unit and dependencies.
-Description=Temporary Dir (/tmp/stuff)
-Documentation=man:somemanpage
-ConditionPathIsSymbolicLink=!/tmp/stuff
-DefaultDependencies=no
-Conflicts=umount.target
-Before=local-fs.target umount.target
-After=swap.target
-
-# Describes mount properties
-What=tmpfs
-Where=/tmp/stuff
-Type=tmpfs
-Options=mode=1777,strictatime,nosuid,nodev
-
-#+end_src
-*** Socket Unit File
-#+begin_src shell
-[Unit]
-Description=Cockpit Web Service Socket
-Documentation=man:cockpit-ws(8)
-Wants=cockpit-motd.service
-
-[Socket]
-# Defines tcp port that systemd should be listening to
-ListenStream=9090
-# For UDP
-ListenDatagram=9090
-ExecStartPost=-/usr/share/cockpit/motd/update-motd '' localhost
-ExecStartPost=-/bin/ln -snf active.motd /run/cockpit/motd
-ExecStopPost=-/bin/ln -snf /usr/share/cockpit/motd/inactive.motd /run/cockpit/motd
-
-[Install]
-WantedBy=sockets.target
-#+end_src
-
-** Systemd Status
-| Status          | Description                                                        |
-| Loaded          | Unit file has been processed and unit is active                    |
-| Active(running) | Running with one or more active                                    |
-|                 | processes                                                          |
-| Active(exited)  | Successfully completed a one-time run                              |
-| Active(waiting) | Running and waiting for an event                                   |
-| Inactive(dead)  | Not running                                                        |
-| Enabled         | Started at boot-time                                               |
-| Disabled        | Not started at boot-time                                           |
-| Static          | Cannot be enabled but may be started by another unit automatically |
-* cron/atd
-** cron
-|Fields      |          |
-|minute      |0-59      |
-|hour        |0-23      |
-|day-of-month|1-31      |
-|month       |1-12      |
-|day-of-week |0-7       |
-
-** atd
-  Make sure atd.service is enabled and running
-  =atq=: check jobs
-  Examples: =at noon=, =at 14:00=
-* apache/httpd
-** Troubleshooting
+* Web Servers
+** apache/httpd
+*** Troubleshooting
 =systemctl status apache2.service -l --no-pager=: ~-l~ makes sure nothing is truncated
 
 =apachectl configtest=: test the /etc/apache2/apache2.conf configuration
-* nginx
+** nginx
 =nginx -t=: test nginx configuration
 ~/logs/error.log~ & ~/logs/access.log~: important log files
 
-** Security Reference
+*** Security Reference
 ~server_tokens off~: will disable the nginx + version number on error pages.
 
 ~add_header X-Frame-Options "SAMEORIGIN";~: indicates if a browser should be allowed to render a page in a <frame> or an <iframe>. Always set this.
@@ -594,7 +634,7 @@ location / {
     limit_except GET HEAD POST { deny all; }
 }
 #+end_src
-** Load Balancer Reference
+*** Load Balancer Reference
 | LB Method       | Description                  |
 | round-robin     | requests are proxied to host |
 |                 | in order they are received   |
@@ -618,7 +658,7 @@ http {
     }
 }
 #+end_src
-** Reverse Proxy Reference
+*** Reverse Proxy Reference
 #+begin_src shell
 server {                    # Make nginx listen on all ipv4 addys on port 443 (0.0.0.0:443)
                             # ssl specifies that all connections accepted should work in SSL mode
@@ -674,38 +714,8 @@ server {
     }
 }
 #+end_src
-* Scripts
-Smaller functions are in =zsh_functions=, but it's impractical to put larger scripts there so they live in =~/scripts= instead so I can call them with aliases. 
-
-
-** ls -la with numerical file permissions/mode
-Warning: AWK BLACK MAGIC AHEAD
-
-I dislike calculating rwx with =ls -la=. I'm not sure why this isn't native to ls, but this function will show the permissions bits next to rwx permissions (i.e. 0644)
-#+begin_src shell :tangle ~/scripts/ls-with-file-mode-bits.sh :mkdirp yes
-ls -l | awk '{
-    k = 0
-    s = 0
-    for( i = 0; i <= 8; i++ )
-    {
-        k += ( ( substr( $1, i+2, 1 ) ~ /[rwxst]/ ) * 2 ^( 8 - i ) )
-    }
-    j = 4 
-    for( i = 4; i <= 10; i += 3 )
-    {
-        s += ( ( substr( $1, i, 1 ) ~ /[stST]/ ) * j )
-        j/=2
-    }
-    if ( k )
-    {
-        printf( "%0o%0o ", s, k )
-    }
-    print
-}'
-#+end_src
 * Misc
 - =cd -= will switch to the last directory you were in. Fun fact, this trick works with =git= as well.
-- =trash-cli=: Essential "recycle bin" command line utility. I use it to rebind rm so I never yeet things off the planet.
 - In order to open a file named =-=, you have to specify the absolute path (i.e. =cat ./-=)
 * Reference
 - [[https://github.com/dylanaraps/pure-bash-bible][Pure Bash Bible]]

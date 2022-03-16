@@ -375,6 +375,8 @@ diff *.bin --to-file base.bin | cut -d ' ' -f3
 $ script
 # -> creates typescript in $(pwd) with output of commands entered after starting script.
 #+end_src
+** keep
+Keep is a neat utility that allows you to save commands into an database so you never forget them again.
 ** GNU coreutil replacements
 - =bat=: more modern =cat=, with automatic paging and syntax highlighting.
 - =ripgrep=: a faster alternative to =grep=.
